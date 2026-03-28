@@ -1,2 +1,37 @@
-# Astra-Ai
-A python based desktop voice assistant capable of executing system-level commands, integrating speech recognition and text-to-speech, and handling asynchronous user interactions.
+# JARVIS Holographic Assistant (Astra-Ai)
+
+Browser-based, full-stack intelligent agent inspired by Iron Man. Built with Next.js, TypeScript, Tailwind, and the Vercel AI SDK (GPT-4o-mini). Includes real-time wake-word detection, web search, and resilient text-to-speech with ElevenLabs fallback to the browser SpeechSynthesis API.
+
+## Key Features
+- **Always-on wake word**: Passive detection for “Jarvis” / “Hey Jarvis,” guarded to avoid self-trigger loops while speaking.
+- **Streaming GPT-4o-mini**: Low-latency responses via Vercel AI SDK.
+- **Web search**: SearchAPI.io integration to enrich responses with fresh context.
+- **Voice pipeline**: Web Speech API STT → GPT → ElevenLabs TTS, with automatic fallback to native speech synthesis if ElevenLabs fails or is unconfigured.
+- **Holographic UI**: Tailwind CSS holographic face with LISTENING/SPEAKING states and CSS-only animations.
+- **Secure by design**: All secrets remain server-side; the client never sees API keys.
+
+## Requirements
+- Node.js 18+
+- API keys: `OPENAI_API_KEY`, `SEARCHAPI_API_KEY`, `ELEVENLABS_API_KEY`, optional `ELEVENLABS_VOICE_ID`
+- Chrome/Edge recommended (SpeechRecognition performs best). Safari/Firefox may degrade gracefully to manual text input.
+
+## Setup
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy environment file and add keys:
+   ```bash
+   cp .env.example .env.local
+   # populate OPENAI_API_KEY, SEARCHAPI_API_KEY, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
+   ```
+3. Run the dev server:
+   ```bash
+   npm run dev
+   ```
+4. Visit `http://localhost:3000` and say “Jarvis” (or use the manual prompt box).
+
+## Notes
+- Wake-word listener pauses during playback to avoid Jarvis triggering itself.
+- If ElevenLabs is unavailable, speech falls back to the browser’s SpeechSynthesis automatically.
+- Search can be toggled off in the UI; responses will rely on model knowledge only.
