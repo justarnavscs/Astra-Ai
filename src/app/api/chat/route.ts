@@ -1,4 +1,4 @@
-import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
 
@@ -8,14 +8,14 @@ type SearchResult = {
   snippet?: string;
 };
 
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const gemini = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
 export async function POST(req: Request) {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured on the server." },
+      { error: "GOOGLE_GENERATIVE_AI_API_KEY is not configured on the server." },
       { status: 500 },
     );
   }
@@ -47,7 +47,7 @@ You are JARVIS, a concise, real-time voice assistant inspired by Iron Man.
     : `User request: ${prompt}`;
 
   const result = await streamText({
-    model: openai("gpt-4o-mini"),
+    model: gemini("gemini-1.5-flash"),
     system,
     messages: [{ role: "user", content: user }],
   });

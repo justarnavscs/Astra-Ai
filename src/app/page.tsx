@@ -310,7 +310,7 @@ export default function Home() {
                 JARVIS Holographic Assistant
               </h1>
               <p className="text-sm text-slate-300">
-                Streaming GPT-4o-mini • Wake word detection • ElevenLabs with graceful fallback
+                Streaming Gemini 1.5 • Wake word detection • ElevenLabs with graceful fallback
               </p>
             </div>
             <div className="flex items-center gap-2">

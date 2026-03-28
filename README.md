@@ -1,18 +1,18 @@
 # JARVIS Holographic Assistant (Astra-Ai)
 
-Browser-based, full-stack intelligent agent inspired by Iron Man. Built with Next.js, TypeScript, Tailwind, and the Vercel AI SDK (GPT-4o-mini). Includes real-time wake-word detection, web search, and resilient text-to-speech with ElevenLabs fallback to the browser SpeechSynthesis API.
+Browser-based, full-stack intelligent agent inspired by Iron Man. Built with Next.js, TypeScript, Tailwind, and the Vercel AI SDK (Gemini 1.5 Flash). Includes real-time wake-word detection, web search, and resilient text-to-speech with ElevenLabs fallback to the browser SpeechSynthesis API.
 
 ## Key Features
 - **Always-on wake word**: Passive detection for “Jarvis” / “Hey Jarvis,” guarded to avoid self-trigger loops while speaking.
-- **Streaming GPT-4o-mini**: Low-latency responses via Vercel AI SDK.
+- **Streaming Gemini 1.5**: Low-latency responses via Vercel AI SDK.
 - **Web search**: SearchAPI.io integration to enrich responses with fresh context.
-- **Voice pipeline**: Web Speech API STT → GPT → ElevenLabs TTS, with automatic fallback to native speech synthesis if ElevenLabs fails or is unconfigured.
+- **Voice pipeline**: Web Speech API STT → Gemini → ElevenLabs TTS, with automatic fallback to native speech synthesis if ElevenLabs fails or is unconfigured.
 - **Holographic UI**: Tailwind CSS holographic face with LISTENING/SPEAKING states and CSS-only animations.
 - **Secure by design**: All secrets remain server-side; the client never sees API keys.
 
 ## Requirements
 - Node.js 18+
-- API keys: `OPENAI_API_KEY`, `SEARCHAPI_API_KEY`, `ELEVENLABS_API_KEY`, optional `ELEVENLABS_VOICE_ID`
+- API keys: `GOOGLE_GENERATIVE_AI_API_KEY`, `SEARCHAPI_API_KEY`, `ELEVENLABS_API_KEY`, optional `ELEVENLABS_VOICE_ID`
 - Chrome/Edge recommended (SpeechRecognition performs best). Safari/Firefox may degrade gracefully to manual text input.
 
 ## Setup
@@ -23,7 +23,7 @@ Browser-based, full-stack intelligent agent inspired by Iron Man. Built with Nex
 2. Copy environment file and add keys:
    ```bash
    cp .env.example .env.local
-   # populate OPENAI_API_KEY, SEARCHAPI_API_KEY, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
+   # populate GOOGLE_GENERATIVE_AI_API_KEY, SEARCHAPI_API_KEY, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
    ```
 3. Run the dev server:
    ```bash
