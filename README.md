@@ -31,6 +31,29 @@ Browser-based, full-stack intelligent agent inspired by Iron Man. Built with Nex
    ```
 4. Visit `http://localhost:3000` and say “Jarvis” (or use the manual prompt box).
 
+## Project structure
+
+The repository follows the same layout as the tutorial video. Key files are:
+
+```
+src/
+  app/
+    api/
+      chat/route.ts     # Streams Gemini 1.5 Flash responses
+      search/route.ts   # Proxies SearchAPI.io queries
+      tts/route.ts      # ElevenLabs text-to-speech endpoint
+    globals.css         # Tailwind v4 setup + animations
+    layout.tsx          # Root layout metadata + shell
+    page.tsx            # Holographic assistant UI and client logic
+  components/
+    HolographicFace.tsx # Face visualization + state badges
+  types/
+    speech.d.ts         # Web Speech API typings
+public/                 # Static assets (icons, svgs)
+```
+
+An `.env.example` file is provided at the repo root with all required keys. Start from that file to configure your own `.env.local`.
+
 ## Notes
 - Wake-word listener pauses during playback to avoid Jarvis triggering itself.
 - If ElevenLabs is unavailable, speech falls back to the browser’s SpeechSynthesis automatically.
