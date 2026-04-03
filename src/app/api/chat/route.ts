@@ -1,55 +1,106 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { streamText } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { streamText, tool, stepCountIs } from "ai";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { JARVIS_SYSTEM_PROMPT } from "@/lib/prompts";
 
-type SearchResult = {
-  title: string;
-  link: string;
-  snippet?: string;
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_HISTORY_MESSAGES = 50;
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
 };
 
-const gemini = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
-      { error: "GOOGLE_GENERATIVE_AI_API_KEY is not configured on the server." },
+      { error: "OPENAI_API_KEY is not configured on the server." },
       { status: 500 },
     );
   }
 
-  const { prompt, includeSearch, searchResults }: { prompt?: string; includeSearch?: boolean; searchResults?: SearchResult[] } =
-    await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const { prompt, history, enableSearch } = body as {
+    prompt?: string;
+    history?: Message[];
+    enableSearch?: boolean;
+  };
 
   if (!prompt?.trim()) {
     return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
   }
 
-  const resolvedSearchResults =
-    includeSearch && Array.isArray(searchResults) ? searchResults : [];
+  // Server-side prompt injection guard: enforce character limit
+  const sanitisedPrompt = prompt.trim().slice(0, MAX_MESSAGE_LENGTH);
 
-  const context = resolvedSearchResults
-    .map((item, index) => `${index + 1}. ${item.title} — ${item.snippet ?? ""} (${item.link})`)
-    .join("\n");
+  const resolvedHistory: Message[] = Array.isArray(history)
+    ? history.slice(-MAX_HISTORY_MESSAGES)
+    : [];
 
-  const system = `
-You are JARVIS, a concise, real-time voice assistant inspired by Iron Man.
-- Prefer short, spoken-friendly answers (1-3 sentences).
-- If search context is provided, ground answers in it and cite the result numbers in-line.
-- If no search data, answer from general knowledge.
-- Use an assisting tone; avoid Markdown.
-`;
+  const messages: Message[] = [
+    ...resolvedHistory,
+    { role: "user", content: sanitisedPrompt },
+  ];
 
-  const user = context
-    ? `User request: ${prompt}\nRecent search results:\n${context}`
-    : `User request: ${prompt}`;
+  const searchApiKey = enableSearch !== false ? process.env.SEARCHAPI_API_KEY : undefined;
 
   const result = await streamText({
-    model: gemini("gemini-1.5-flash"),
-    system,
-    messages: [{ role: "user", content: user }],
+    model: openai(process.env.OPENAI_MODEL ?? "gpt-4o-mini"),
+    system: JARVIS_SYSTEM_PROMPT,
+    messages,
+    stopWhen: stepCountIs(3),
+    tools: searchApiKey
+      ? {
+          web_search: tool({
+            description:
+              "Search the web for current information. Use for post-2023 events or time-sensitive queries.",
+            inputSchema: z.object({
+              query: z.string().describe("The search query"),
+            }),
+            execute: async (input) => {
+              const { query } = input as { query: string };
+              try {
+                const url = new URL("https://www.searchapi.io/api/v1/search");
+                url.searchParams.set("engine", "google");
+                url.searchParams.set("q", query);
+
+                const res = await fetch(url.toString(), {
+                  headers: { "x-api-key": searchApiKey },
+                  signal: AbortSignal.timeout(8000),
+                });
+
+                if (!res.ok) return { results: [] };
+
+                const data = (await res.json()) as {
+                  organic_results?: Array<{
+                    title: string;
+                    link: string;
+                    snippet?: string;
+                  }>;
+                };
+                const results = (data.organic_results ?? [])
+                  .slice(0, 4)
+                  .map((r) => ({ title: r.title, link: r.link, snippet: r.snippet ?? "" }));
+
+                return { results };
+              } catch {
+                return { results: [] };
+              }
+            },
+          }),
+        }
+      : undefined,
   });
 
   return result.toTextStreamResponse();
